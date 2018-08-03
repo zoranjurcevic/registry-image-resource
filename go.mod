@@ -8,6 +8,7 @@ require (
 	github.com/google/go-cmp v0.2.0 // indirect
 	github.com/google/go-containerregistry v0.0.0-20180801194910-5f7b0e489541
 	github.com/hpcloud/tail v1.0.0 // indirect
+	github.com/mattn/go-runewidth v0.0.2 // indirect
 	github.com/onsi/ginkgo v1.6.0 // indirect
 	github.com/onsi/gomega v1.4.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -19,6 +20,7 @@ require (
 	golang.org/x/sys v0.0.0-20180802203216-0ffbfd41fbef // indirect
 	golang.org/x/text v0.3.0 // indirect
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
+	gopkg.in/cheggaaa/pb.v1 v1.0.25 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect

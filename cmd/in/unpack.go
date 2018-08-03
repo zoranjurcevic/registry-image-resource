@@ -2,12 +2,15 @@ package main
 
 import (
 	"archive/tar"
+	"compress/gzip"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/concourse/go-archive/tarfs"
 	"github.com/google/go-containerregistry/pkg/v1"
+	pb "gopkg.in/cheggaaa/pb.v1"
 )
 
 const whiteoutPrefix = ".wh."
@@ -21,17 +24,40 @@ func unpackImage(dest string, img v1.Image) error {
 	written := map[string]struct{}{}
 	removed := map[string]struct{}{}
 
+	chown := os.Getuid() == 0
+
 	// iterate over layers in reverse order; no need to write things files that
 	// are modified by later layers anyway
 	for i := len(layers) - 1; i >= 0; i-- {
 		layer := layers[i]
 
-		r, err := layer.Uncompressed()
+		size, err := layer.Size()
 		if err != nil {
 			return err
 		}
 
-		tr := tar.NewReader(r)
+		digest, err := layer.Digest()
+		if err != nil {
+			return err
+		}
+
+		bar := pb.New64(size).SetUnits(pb.U_BYTES)
+		bar.Output = os.Stderr
+		bar.Prefix(digest.Hex[0:12])
+
+		r, err := layer.Compressed()
+		if err != nil {
+			return err
+		}
+
+		bar.Start()
+
+		gr, err := gzip.NewReader(bar.NewProxyReader(r))
+		if err != nil {
+			return err
+		}
+
+		tr := tar.NewReader(gr)
 
 		for {
 			hdr, err := tr.Next()
@@ -66,10 +92,22 @@ func unpackImage(dest string, img v1.Image) error {
 
 			written[path] = struct{}{}
 
-			if err := tarfs.ExtractEntry(hdr, dest, tr, true); err != nil {
+			if err := tarfs.ExtractEntry(hdr, dest, tr, chown); err != nil {
 				return err
 			}
 		}
+
+		err = gr.Close()
+		if err != nil {
+			return err
+		}
+
+		err = r.Close()
+		if err != nil {
+			return err
+		}
+
+		bar.Finish()
 	}
 
 	return nil
